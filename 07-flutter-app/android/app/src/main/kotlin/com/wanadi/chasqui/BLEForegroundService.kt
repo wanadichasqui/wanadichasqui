@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.example.wanadi_chasqui.R
 
 class BLEForegroundService : Service() {
     companion object {
@@ -28,7 +29,7 @@ class BLEForegroundService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Wanadi Chasqui")
             .setContentText("Modo rescate activo")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .build()
         startForeground(NOTIFICATION_ID, notification)
