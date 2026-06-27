@@ -1,0 +1,31 @@
+# Rust build artifacts
+**/target/
+target/
+Cargo.lock
+
+# Flutter/Dart build artifacts
+**/build/
+build/
+.dart_tool/
+**/.dart_tool/
+.packages
+**/.packages
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
+
+# Archives & caches
+vendor-cache.tar.gz
+*.tar.gz
+*.zip
+*.tgz
+
+# IDEs & System files
+.idea/
+.vscode/
+.DS_Store
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.hprof

@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mix-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wanadi-mix-node
+    ports:
+      - "8000:8000"
+    environment:
+      - WANADI_HOST=0.0.0.0
+      - WANADI_PORT=8000
+      - WANADI_BLOB_DB=/data/mix_node_blobs.db
+      - RUST_LOG=info
+      # Descomenta estas líneas si deseas utilizar TLS propio
+      # - WANADI_TLS_CERT=/data/cert.pem
+      # - WANADI_TLS_KEY=/data/key.pem
+    volumes:
+      - wanadi_data:/data
+    restart: unless-stopped
+
+volumes:
+  wanadi_data:
+    driver: local

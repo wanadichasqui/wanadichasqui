@@ -1,0 +1,39 @@
+name: wanadi_chasqui_app
+description: "A premium Flutter client for the Wanadi Chasqui Mix-Network with Noise XX handshake, Double Ratchet encryption, and node authentication."
+version: 1.0.0+1
+
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.2
+  http: ^1.2.0
+  web_socket_channel: ^3.0.0
+  shared_preferences: ^2.2.0
+  intl: ^0.19.0
+  # BLE libraries (reactive & peripheral)
+  flutter_reactive_ble: ^5.3.0
+  flutter_ble_peripheral: ^2.1.1
+  # Bridge to Rust (generated code will be placed in lib/bridge_generated.dart)
+  flutter_rust_bridge: ^2.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#0A0E1A"
+  adaptive_icon_foreground: "assets/icon.png"

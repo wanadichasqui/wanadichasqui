@@ -1,0 +1,11 @@
+[workspace]
+resolver = "1"
+members = [
+    "01-wire-protocol",
+    "02-mix-node",
+    "03-crypto-core",
+    "04-dht-simple",
+    "05-storage",
+    "06-notifications"
+]
+

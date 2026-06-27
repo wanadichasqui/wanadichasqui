@@ -1,0 +1,68 @@
+
+[!] Your app isn't using AndroidX.
+    To avoid potential build failures, you can quickly migrate your app by following the steps on https://goo.gl/CP92wY .
+Running Gradle task 'assembleDebug'...                          
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/obsidian/.gradle/wrapper/dists/gradle-8.7-all/aan3ydargesu18aqyqjwhr3pc/gradle-8.7/lib/native-platform-0.22-milestone-25.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Warning: The plugin flutter_ble_peripheral requires Android SDK version 36 or higher.
+For more information about build configuration, see https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+One or more plugins require a higher Android SDK version.
+Fix this issue by adding the following to /home/obsidian/wanadi chasqui/07-flutter-app/android/app/build.gradle:
+android {
+  compileSdkVersion 36
+  ...
+}
+
+One or more plugins require a higher Android NDK version.
+Fix this issue by adding the following to /home/obsidian/wanadi chasqui/07-flutter-app/android/app/build.gradle:
+android {
+  ndkVersion "26.1.10909125"
+  ...
+}
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Configuration `:app:debugRuntimeClasspath` contains AndroidX dependencies, but the `android.useAndroidX` property is not enabled, which may cause runtime issues.
+Set `android.useAndroidX=true` in the `gradle.properties` file and retry.
+The following AndroidX dependencies are detected:
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.lifecycle:lifecycle-common:2.2.0
+:app:debugRuntimeClasspath -> project :shared_preferences_android -> androidx.datastore:datastore:1.0.0 -> androidx.annotation:annotation:1.2.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.lifecycle:lifecycle-common-java8:2.2.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.lifecycle:lifecycle-runtime:2.2.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.lifecycle:lifecycle-runtime:2.2.0 -> androidx.arch.core:core-common:2.1.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.core:core:1.6.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.core:core:1.6.0 -> androidx.annotation:annotation-experimental:1.1.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.core:core:1.6.0 -> androidx.versionedparcelable:versionedparcelable:1.1.1
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.window:window-java:1.0.0-beta04 -> androidx.window:window:1.0.0-beta04 -> androidx.collection:collection:1.1.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.viewpager:viewpager:1.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.viewpager:viewpager:1.0.0 -> androidx.customview:customview:1.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.loader:loader:1.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.loader:loader:1.0.0 -> androidx.lifecycle:lifecycle-livedata:2.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.loader:loader:1.0.0 -> androidx.lifecycle:lifecycle-livedata:2.0.0 -> androidx.arch.core:core-runtime:2.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.loader:loader:1.0.0 -> androidx.lifecycle:lifecycle-livedata:2.0.0 -> androidx.lifecycle:lifecycle-livedata-core:2.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.lifecycle:lifecycle-viewmodel:2.1.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.activity:activity:1.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.fragment:fragment:1.1.0 -> androidx.activity:activity:1.0.0 -> androidx.savedstate:savedstate:1.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.tracing:tracing:1.0.0
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.window:window-java:1.0.0-beta04
+:app:debugRuntimeClasspath -> project :flutter_ble_peripheral -> io.flutter:flutter_embedding_debug:1.0.0-f6344b75dcf861d8bf1f1322780b8811f982e31a -> androidx.window:window-java:1.0.0-beta04 -> androidx.window:window:1.0.0-beta04
+:app:debugRuntimeClasspath -> project :shared_preferences_android -> androidx.datastore:datastore:1.0.0
+:app:debugRuntimeClasspath -> project :shared_preferences_android -> androidx.datastore:datastore:1.0.0 -> androidx.datastore:datastore-core:1.0.0
+:app:debugRuntimeClasspath -> project :shared_preferences_android -> androidx.datastore:datastore-preferences:1.0.0
+:app:debugRuntimeClasspath -> project :shared_preferences_android -> androidx.datastore:datastore-preferences:1.0.0 -> androidx.datastore:datastore-preferences-core:1.0.0
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 16s
+Running Gradle task 'assembleDebug'...                             17,3s
+Gradle task assembleDebug failed with exit code 1

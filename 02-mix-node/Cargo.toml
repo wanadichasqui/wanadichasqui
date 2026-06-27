@@ -1,0 +1,36 @@
+[package]
+name = "mix_node"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ tokio = { version = "1", features = ["full"] }
+ axum = { version = "0.7", features = ["ws"] }
+ tower-http = { version = "0.5", features = ["cors"] }
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ bytes = "1"
+ dht_simple = { path = "../04-dht-simple" }
+ wire_protocol = { path = "../01-wire-protocol" }
+ regex = "1"
+ ureq = "2"
+ reqwest = { version = "0.11", features = ["json", "blocking", "rustls-tls"] }
+  hex = "0.4"
+  flutter_rust_bridge = "2.12.0"
+  crypto_core = { path = "../03-crypto-core" }
+  futures = "0.3"
+  rand = "0.8"
+  ed25519-dalek = { version = "2", features = ["rand_core"] }
+  x25519-dalek = { version = "2", features = ["static_secrets"] }
+  axum-server = { version = "0.7", features = ["tls-rustls-no-provider"] }
+  rustls = { version = "0.23", features = ["ring"] }
+  rcgen = "0.13"
+  tracing = "0.1"
+  tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+
+[dev-dependencies]
+ hyper = { version = "1", features = ["full"] }
+ tower = { version = "0.4", features = ["util"] }
+ http-body-util = "0.1"
+ tokio-tungstenite = "0.24"
