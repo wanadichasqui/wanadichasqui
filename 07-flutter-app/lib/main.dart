@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Inicia el Foreground Service antes de arrancar la UI
-  await _ensureForegroundService();
+  // Inicia el Foreground Service en segundo plano sin bloquear el arranque de la UI
+  _ensureForegroundService();
   runApp(
     ChangeNotifierProvider(
       create: (_) => ChasquiService(),

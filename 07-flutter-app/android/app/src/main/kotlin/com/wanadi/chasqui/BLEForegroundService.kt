@@ -21,6 +21,11 @@ class BLEForegroundService : Service() {
         createNotificationChannel()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startForegroundDaemon()
+        return START_STICKY
+    }
+
     /**
      * Called from Flutter via MethodChannel to start the daemon.
      * It puts this Service in the foreground so Android does not kill it.

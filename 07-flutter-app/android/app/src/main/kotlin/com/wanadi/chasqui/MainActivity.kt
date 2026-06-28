@@ -15,8 +15,12 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "startForegroundDaemon" -> {
-                    startForegroundService()
-                    result.success(null)
+                    try {
+                        startForegroundService()
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("SERVICE_ERROR", e.message, null)
+                    }
                 }
                 else -> result.notImplemented()
             }
