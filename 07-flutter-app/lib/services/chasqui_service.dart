@@ -71,7 +71,7 @@ class ChasquiService extends ChangeNotifier {
     // Health check periódico cada 5 segundos
     _healthCheckTimer = Timer.periodic(const Duration(seconds: 5), (_) => checkNodeHealth());
     // Simulación de presencia cada 8 segundos para dinamismo visual
-    _presenceSimulationTimer = Timer.periodic(const Duration(seconds: 8), (_) => _simulatePresenceUpdates());
+    // _presenceSimulationTimer = Timer.periodic(const Duration(seconds: 8), (_) => _simulatePresenceUpdates()); // DESACTIVADO
     // Tráfico de cobertura local
     _startDummyScheduler();
   }
@@ -104,7 +104,7 @@ class ChasquiService extends ChangeNotifier {
     isForceOffline = prefs.getBool('is_force_offline') ?? false;
 
     if (localPrivateKeyHex == null || localPublicKeyHex == null || localMnemonic == null) {
-      _generateNewIdentity();
+      await _generateNewIdentity();
     }
 
     _loadContacts(prefs);
@@ -115,9 +115,9 @@ class ChasquiService extends ChangeNotifier {
   }
 
   // Generar identidad con frase de recuperación
-  void _generateNewIdentity() {
+  Future<void> _generateNewIdentity() async {
     final rand = Random.secure();
-    
+
     // Generar frase mnemónica de 12 palabras aleatorias
     final words = List<String>.generate(12, (_) => _wordList[rand.nextInt(_wordList.length)]);
     localMnemonic = words.join(" ");
@@ -129,8 +129,9 @@ class ChasquiService extends ChangeNotifier {
 
     localPrivateKeyHex = pkBytes.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
     localPublicKeyHex = pubBytes.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
-    
-    _saveIdentity();
+
+    // CRÍTICO: await para garantizar que la clave queda en disco antes de continuar.
+    await _saveIdentity();
     logSystemEvent("Nueva identidad Ed25519 generada. Frase de recuperación creada.", type: "success");
   }
 
@@ -167,6 +168,8 @@ class ChasquiService extends ChangeNotifier {
       await prefs.setString('mnemonic', localMnemonic!);
     }
     await prefs.setString('display_name', displayName);
+    // Nota: en shared_preferences moderno cada await setX() ya persiste a disco.
+    // El await garantiza el flush antes de que la app pueda ser terminada.
     notifyListeners();
   }
 
@@ -226,35 +229,8 @@ class ChasquiService extends ChangeNotifier {
   void _loadContacts(SharedPreferences prefs) {
     final list = prefs.getStringList('contacts') ?? [];
     contacts = list.map((e) => Contact.fromJson(json.decode(e))).toList();
-    if (contacts.isEmpty) {
-      contacts = [
-        Contact(
-          name: "Alice (Mix-Node 1)",
-          publicKeyHex: "2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c",
-          alias: "Alice",
-          isOnline: true,
-          lastSeen: DateTime.now(),
-          isVerified: true,
-        ),
-        Contact(
-          name: "Bob (Gateway)",
-          publicKeyHex: "4f3c2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf",
-          alias: "Bob",
-          isOnline: false,
-          lastSeen: DateTime.now().subtract(const Duration(minutes: 15)),
-          isVerified: false,
-        ),
-        Contact(
-          name: "Chasqui Router Alpha",
-          publicKeyHex: "8af7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6",
-          alias: "Router A",
-          isOnline: true,
-          lastSeen: DateTime.now(),
-          isVerified: false,
-        )
-      ];
-      _saveContacts();
-    }
+    // Producción: sin contactos de demostración. La libreta empieza vacía
+    // hasta que el usuario añada contactos reales o sincronice vía BLE.
   }
 
   Future<void> _saveContacts() async {
@@ -285,10 +261,10 @@ class ChasquiService extends ChangeNotifier {
           return MapEntry(key, list.map((e) => ChatMessage.fromJson(e)).toList());
         });
       } catch (_) {
-        _loadDemoData();
+        conversations = {};
       }
     } else {
-      _loadDemoData();
+      conversations = {};
     }
   }
 
@@ -389,40 +365,6 @@ class ChasquiService extends ChangeNotifier {
         type: verified ? "success" : "warning"
       );
     }
-  }
-
-  void _loadDemoData() {
-    conversations = {
-      "2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c": [
-        ChatMessage(
-          id: "1",
-          senderPublicKeyHex: "2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c",
-          receiverPublicKeyHex: localPublicKeyHex ?? "",
-          text: "¡Hola! He iniciado el handshake Noise XX.",
-          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-          isSentByMe: false,
-          status: "delivered",
-        ),
-        ChatMessage(
-          id: "2",
-          senderPublicKeyHex: localPublicKeyHex ?? "",
-          receiverPublicKeyHex: "2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c",
-          text: "Perfecto, handshake completado con éxito. Sesión cifrada activa.",
-          timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
-          isSentByMe: true,
-          status: "delivered",
-        ),
-        ChatMessage(
-          id: "3",
-          senderPublicKeyHex: "2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c",
-          receiverPublicKeyHex: localPublicKeyHex ?? "",
-          text: "Excelente. Los mensajes se envían cifrados con ChaCha20-Poly1305 y tramas de cobertura.",
-          timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-          isSentByMe: false,
-          status: "delivered",
-        )
-      ]
-    };
   }
 
   void logSystemEvent(String message, {String type = "info"}) {
@@ -577,25 +519,6 @@ class ChasquiService extends ChangeNotifier {
       offlineQueue.add(chatMsg);
       _saveOfflineQueue();
       logSystemEvent("Dispositivo sin conexión. Mensaje encolado para sincronización offline.", type: "warning");
-      
-      // Simular auto-respuesta offline
-      if (receiverPubKey == "2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c") {
-        Timer(const Duration(seconds: 3), () {
-          final replyId = DateTime.now().millisecondsSinceEpoch.toString();
-          final reply = ChatMessage(
-            id: replyId,
-            senderPublicKeyHex: receiverPubKey,
-            receiverPublicKeyHex: localPublicKeyHex ?? "",
-            text: "[Offline Mode] Mensaje guardado en buzón local. Responderé al reconectar.",
-            timestamp: DateTime.now(),
-            isSentByMe: false,
-            status: "delivered",
-          );
-          conversations[receiverPubKey]!.add(reply);
-          _saveConversations();
-          notifyListeners();
-        });
-      }
     }
   }
 
@@ -787,7 +710,7 @@ class ChasquiService extends ChangeNotifier {
   }
 
   // --- DETECCIÓN DE PRESENCIA DE CONTACTOS ---
-  void _simulatePresenceUpdates() {
+  void _simulatePresenceUpdates() { return; // DESACTIVADO
     if (isForceOffline || !isNodeOnline) return;
 
     final rand = Random();
@@ -1032,14 +955,9 @@ class ChasquiService extends ChangeNotifier {
     logSystemEvent("Iniciando escaneo BLE táctico. Escuchando canales efímeros...", type: "info");
     notifyListeners();
 
-    _bleSimulationTimer?.cancel();
-    _bleSimulationTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (!isBleScanning) {
-        timer.cancel();
-        return;
-      }
-      _simulatePeerDetection();
-    });
+    // Producción: el descubrimiento real de peers se realiza vía la capa nativa
+    // BLE (flutter_reactive_ble). No se inyectan nodos simulados para evitar
+    // dar una falsa sensación de red disponible en el terreno.
   }
 
   void stopBleScanning() {
@@ -1060,27 +978,6 @@ class ChasquiService extends ChangeNotifier {
     isBleAdvertising = false;
     logSystemEvent("Beaconing BLE detenido.", type: "info");
     notifyListeners();
-  }
-
-  void _simulatePeerDetection() {
-    final names = ["Chasqui Nodo Táctico A", "Refugio Comunal", "Patrulla de Enlace 3", "Chasqui Repetidor 0xAF"];
-    final devices = ["Smartphone (Android)", "Raspberry Pi Meshtastic", "Móvil (iOS)", "Estación Base LoRa/BLE"];
-    final random = Random();
-    
-    if (detectedBlePeers.length < 4) {
-      final idx = detectedBlePeers.length;
-      final peer = {
-        'id': 'peer_0x${random.nextInt(65536).toRadixString(16).padLeft(4, '0')}',
-        'name': names[idx],
-        'device': devices[idx],
-        'rssi': -55 - random.nextInt(35),
-        'pendingMessages': random.nextInt(3) + 1,
-        'synced': false,
-      };
-      detectedBlePeers.add(peer);
-      logSystemEvent("Par detectado vía BLE: ${peer['name']} (${peer['device']}) [RSSI: ${peer['rssi']} dBm].", type: "info");
-      notifyListeners();
-    }
   }
 
   Future<void> syncOfflineQueueWithPeer(String peerId) async {

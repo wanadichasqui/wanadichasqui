@@ -502,29 +502,29 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
-        actions: [
-          IconButton(
-            tooltip: "Llamada de voz cifrada",
-            icon: const Icon(Icons.call, color: WanadiBrand.mintTech, size: 22),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CallScreen(contact: currentContact, isVideo: false),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            tooltip: "Videollamada cifrada",
-            icon: const Icon(Icons.videocam, color: WanadiBrand.info, size: 22),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CallScreen(contact: currentContact, isVideo: true),
-                ),
-              );
+//         actions: [
+//           IconButton(
+//             tooltip: "Llamada de voz cifrada",
+//             icon: const Icon(Icons.call, color: WanadiBrand.mintTech, size: 22),
+//             onPressed: () {
+//               Navigator.push(
+//                 context,
+//                 MaterialPageRoute(
+//                   builder: (_) => CallScreen(contact: currentContact, isVideo: false),
+//                 ),
+//               );
+//             },
+//           ),
+//           IconButton(
+//             tooltip: "Videollamada cifrada",
+//             icon: const Icon(Icons.videocam, color: WanadiBrand.info, size: 22),
+//             onPressed: () {
+//               Navigator.push(
+//                 context,
+//                 MaterialPageRoute(
+//                   builder: (_) => CallScreen(contact: currentContact, isVideo: true),
+//                 ),
+//               );
             },
           ),
           IconButton(

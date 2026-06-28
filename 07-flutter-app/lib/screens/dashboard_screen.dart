@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import 'identity_screen.dart';
 import 'contacts_screen.dart';
-import 'groups_screen.dart';
-import 'notifications_screen.dart';
 import 'settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -19,8 +17,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _screens = [
     const IdentityScreen(),
     const ContactsScreen(),
-    const GroupsScreen(),
-    const NotificationsScreen(),
     const SettingsScreen(),
   ];
 
@@ -54,16 +50,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.contacts_outlined),
             activeIcon: Icon(Icons.contacts),
             label: "Contactos",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.groups_outlined),
-            activeIcon: Icon(Icons.groups),
-            label: "Grupos",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            activeIcon: Icon(Icons.notifications),
-            label: "Seguridad",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
