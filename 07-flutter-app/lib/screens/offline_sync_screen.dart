@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/chasqui_service.dart';
 import '../main.dart';
@@ -129,7 +130,8 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                   value: service.isForceOffline,
                   activeColor: WanadiBrand.mintTech,
                   onChanged: (val) {
-                    service.toggleOfflineMode(forceOffline: val);
+                    HapticFeedback.heavyImpact();
+                service.toggleOfflineMode(forceOffline: val);
                   },
                 ),
               ),
@@ -200,6 +202,7 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                       icon: Icons.wifi_tethering,
                       isActive: service.isBleAdvertising,
                       onTap: () {
+                        HapticFeedback.mediumImpact();
                         if (service.isBleAdvertising) {
                           service.stopBleAdvertising();
                         } else {
@@ -216,6 +219,7 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                       icon: Icons.bluetooth_searching,
                       isActive: service.isBleScanning,
                       onTap: () {
+                        HapticFeedback.mediumImpact();
                         if (service.isBleScanning) {
                           service.stopBleScanning();
                         } else {
@@ -255,55 +259,108 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                 const SizedBox(height: 8),
                 if (service.detectedBlePeers.isEmpty)
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    padding: EdgeInsets.symmetric(vertical: 32.0),
                     child: Center(
                       child: Text(
-                        "Buscando señales... Asegúrate de que otros dispositivos estén transmitiendo.",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        "Buscando señales... Asegúrate de que otros nodos estén transmitiendo.",
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   )
                 else
-                  ListView.builder(
+                  ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: service.detectedBlePeers.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final peer = service.detectedBlePeers[index];
                       final isSynced = peer['synced'] == true;
-
-                      return Card(
-                        color: WanadiBrand.surfaceDark,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: Icon(
-                            peer['device'].contains("Pi") ? Icons.dns : Icons.phone_android,
-                            color: isSynced ? WanadiBrand.mintTech : Colors.white70,
-                          ),
-                          title: Text(
-                            peer['name'],
-                            style: const TextStyle(color: WanadiBrand.pureWhite, fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                          subtitle: Text(
-                            "${peer['device']} • RSSI: ${peer['rssi']} dBm",
-                            style: const TextStyle(color: Colors.grey, fontSize: 11),
-                          ),
-                          trailing: isSynced
-                              ? const Icon(Icons.check_circle, color: WanadiBrand.safe)
-                              : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: WanadiBrand.navyDeep,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      final int rssi = (peer['rssi'] as num?)?.toInt() ?? -90;
+                      final Color rssiColor = rssi > -60
+                          ? const Color(0xFF00E676)
+                          : rssi > -80
+                              ? Colors.orangeAccent
+                              : Colors.redAccent;
+                      final int bars = rssi > -60 ? 4 : rssi > -70 ? 3 : rssi > -80 ? 2 : 1;
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF071424),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.05)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: rssiColor.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.router_rounded, color: rssiColor, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    peer['name']?.toString().isEmpty == true ? "Nodo Anónimo" : peer['name'].toString(),
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
                                   ),
-                                  onPressed: () => _handlePeerSync(context, service, peer),
-                                  child: const Text(
-                                    "Sincronizar",
-                                    style: TextStyle(color: WanadiBrand.mintTech, fontSize: 11, fontWeight: FontWeight.bold),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "ID: ${peer['id'].toString().substring(0, 8)}... | ${peer['device'] ?? 'BLE'}",
+                                    style: const TextStyle(color: Colors.white38, fontSize: 11),
                                   ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "$rssi dBm",
+                                  style: TextStyle(color: rssiColor, fontWeight: FontWeight.bold, fontSize: 12),
                                 ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: List.generate(4, (i) {
+                                    return Container(
+                                      width: 3,
+                                      height: (i + 1) * 3.0,
+                                      margin: const EdgeInsets.only(left: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: i < bars ? rssiColor : Colors.white10,
+                                        borderRadius: BorderRadius.circular(1),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                                const SizedBox(height: 6),
+                                isSynced
+                                  ? const Icon(Icons.check_circle, color: WanadiBrand.safe, size: 20)
+                                  : GestureDetector(
+                                      onTap: () => _handlePeerSync(context, service, peer),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: WanadiBrand.navyDeep,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: WanadiBrand.mintTech.withOpacity(0.5)),
+                                        ),
+                                        child: const Text(
+                                          "Sincronizar",
+                                          style: TextStyle(color: WanadiBrand.mintTech, fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     },
