@@ -38,7 +38,7 @@ class ChasquiService extends ChangeNotifier {
     try {
       await _foregroundChannel.invokeMethod('startForegroundDaemon');
     } catch (e) {
-      logSystemEvent('No se pudo iniciar el servicio en primer plano: \$e', type: 'error');
+      logSystemEvent("No se pudo iniciar el servicio en primer plano: $e", type: "error");
     }
   }
   // Configuración de red
