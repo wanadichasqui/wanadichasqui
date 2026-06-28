@@ -6,6 +6,7 @@ import 'dart:io' show BytesBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'tactical_peer_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +18,7 @@ export '../models/mls_group.dart';
 
 class ChasquiService extends ChangeNotifier {
   static const _foregroundChannel = MethodChannel('com.wanadi.chasqui/foreground');
+  final tacticalPeerController = TacticalPeerController();
 
 
   Future<bool> requestBlePermissions() async {
@@ -984,6 +986,7 @@ class ChasquiService extends ChangeNotifier {
     }
     isBleScanning = true;
     detectedBlePeers.clear();
+    tacticalPeerController.clearCache();
     await _startForegroundService();
     logSystemEvent("Iniciando escaneo BLE táctico. Escuchando canales efímeros...", type: "info");
     notifyListeners();

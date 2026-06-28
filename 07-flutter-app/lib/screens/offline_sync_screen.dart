@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/chasqui_service.dart';
@@ -13,6 +15,9 @@ class OfflineSyncScreen extends StatefulWidget {
 
 class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
+  StreamSubscription? _btStateSubscription;
+  bool _isBluetoothEnabled = true;
+  final _ble = FlutterReactiveBle();
   final TextEditingController _qrInputController = TextEditingController();
 
   @override
@@ -22,12 +27,40 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+    _btStateSubscription = _ble.statusStream.listen((status) {
+      final isEnabled = status == BleStatus.ready;
+      if (_isBluetoothEnabled != isEnabled) {
+        setState(() => _isBluetoothEnabled = isEnabled);
+        if (!isEnabled) {
+          HapticFeedback.vibrate();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFFB71C1C),
+              duration: const Duration(seconds: 4),
+              content: Row(
+                children: const [
+                  Icon(Icons.bluetooth_disabled, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "ADVERTENCIA: Bluetooth desactivado.",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _qrInputController.dispose();
+    _btStateSubscription?.cancel();
     super.dispose();
   }
 

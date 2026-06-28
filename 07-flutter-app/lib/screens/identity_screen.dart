@@ -198,19 +198,19 @@ class _IdentityScreenState extends State<IdentityScreen> {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: service.isForceOffline
-                          ? const Color(0xFFE5484D).withOpacity(0.1)
+                      color: (service.isForceOffline
+                          ? const Color(0xFFE5484D)
                           : service.isNodeOnline
-                              ? WanadiBrand.safe.withOpacity(0.1)
-                              : WanadiBrand.warning.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
+                              ? const Color(0xFF00E676)
+                              : WanadiBrand.warning).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: service.isForceOffline
                             ? const Color(0xFFE5484D)
                             : service.isNodeOnline
-                                ? WanadiBrand.safe
+                                ? const Color(0xFF00E676)
                                 : WanadiBrand.warning,
                         width: 1,
                       ),
@@ -219,32 +219,29 @@ class _IdentityScreenState extends State<IdentityScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: 6,
+                          height: 6,
                           decoration: BoxDecoration(
                             color: service.isForceOffline
                                 ? const Color(0xFFE5484D)
                                 : service.isNodeOnline
-                                    ? WanadiBrand.safe
+                                    ? const Color(0xFF00E676)
                                     : WanadiBrand.warning,
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Text(
-                          service.isForceOffline
-                              ? "SIN INTERNET"
-                              : service.isNodeOnline
-                                  ? "ONLINE"
-                                  : "DEMO",
+                          service.isForceOffline ? "SIN INTERNET" : service.isNodeOnline ? "ON LINE" : "DEMO",
                           style: TextStyle(
                             color: service.isForceOffline
                                 ? const Color(0xFFE5484D)
                                 : service.isNodeOnline
-                                    ? WanadiBrand.safe
+                                    ? const Color(0xFF00E676)
                                     : WanadiBrand.warning,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
