@@ -5,7 +5,7 @@ import '../models/contact.dart';
 import '../models/message.dart';
 import '../services/chasqui_service.dart';
 import '../main.dart';
-import 'call_screen.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final Contact contact;
@@ -502,7 +502,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
-//         actions: [
+          actions: [
 //           IconButton(
 //             tooltip: "Llamada de voz cifrada",
 //             icon: const Icon(Icons.call, color: WanadiBrand.mintTech, size: 22),
@@ -525,8 +525,7 @@ class _ChatScreenState extends State<ChatScreen> {
 //                   builder: (_) => CallScreen(contact: currentContact, isVideo: true),
 //                 ),
 //               );
-            },
-          ),
+//           ),
           IconButton(
             tooltip: "Verificar Contacto",
             icon: Icon(
