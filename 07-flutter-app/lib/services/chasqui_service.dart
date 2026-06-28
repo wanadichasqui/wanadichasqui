@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:io' show BytesBuilder;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +15,15 @@ import '../models/mls_group.dart';
 export '../models/mls_group.dart';
 
 class ChasquiService extends ChangeNotifier {
+  static const _foregroundChannel = MethodChannel('com.wanadi.chasqui/foreground');
+
+  Future<void> _startForegroundService() async {
+    try {
+      await _foregroundChannel.invokeMethod('startForegroundDaemon');
+    } catch (e) {
+      logSystemEvent('No se pudo iniciar el servicio en primer plano: \$e', type: 'error');
+    }
+  }
   // Configuración de red
   String nodeUrl = "http://localhost:8000";
   String wsUrl = "ws://localhost:8000/signal";
@@ -136,7 +146,7 @@ class ChasquiService extends ChangeNotifier {
   }
 
   // Importar identidad desde una frase mnemónica
-  void importFromMnemonic(String mnemonic) {
+  Future<void> importFromMnemonic(String mnemonic) async {
     final cleanMnemonic = mnemonic.trim().toLowerCase();
     final words = cleanMnemonic.split(RegExp(r'\s+'));
     if (words.length != 12) {
@@ -221,9 +231,9 @@ class ChasquiService extends ChangeNotifier {
         .then((prefs) => prefs.setBool('is_force_offline', isForceOffline));
   }
 
-  void updateDisplayName(String name) {
+  Future<void> updateDisplayName(String name) async {
     displayName = name;
-    _saveIdentity();
+    await _saveIdentity();
   }
 
   void _loadContacts(SharedPreferences prefs) {
@@ -948,10 +958,11 @@ class ChasquiService extends ChangeNotifier {
 
   // ─── OFFLINE TACTICAL BLE SYNC ──────────────────────────
 
-  void startBleScanning() {
+  Future<void> startBleScanning() async {
     if (isBleScanning) return;
     isBleScanning = true;
     detectedBlePeers.clear();
+    await _startForegroundService();
     logSystemEvent("Iniciando escaneo BLE táctico. Escuchando canales efímeros...", type: "info");
     notifyListeners();
 
@@ -967,9 +978,10 @@ class ChasquiService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void startBleAdvertising() {
+  Future<void> startBleAdvertising() async {
     if (isBleAdvertising) return;
     isBleAdvertising = true;
+    await _startForegroundService();
     logSystemEvent("Beaconing BLE activo. Transmitiendo identidad soberana...", type: "success");
     notifyListeners();
   }
