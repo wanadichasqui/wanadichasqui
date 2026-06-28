@@ -77,12 +77,12 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFFE5484D).withOpacity(0.3),
-                      blurRadius: 8,
+                      blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
                     const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 36),
@@ -93,12 +93,12 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                         children: [
                           const Text(
                             "COMUNICACIÓN DE EMERGENCIA CIVIL",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1.0),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.5),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             "Modo táctico activado. Permite intercambiar mensajes cifrados de extremo a extremo sin conexión a Internet utilizando saltos físicos entre dispositivos (BLE/Mesh).",
-                            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11),
+                            style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12, height: 1.4),
                           ),
                         ],
                       ),
@@ -372,12 +372,14 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
+        constraints: const BoxConstraints(minHeight: 120),
         decoration: BoxDecoration(
           color: isActive ? WanadiBrand.mintTech.withOpacity(0.15) : WanadiBrand.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isActive ? WanadiBrand.mintTech : Colors.transparent,
             width: 1.5,
@@ -385,23 +387,24 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Icon(
               icon,
-              color: isActive ? WanadiBrand.mintTech : Colors.white70,
+              color: isActive ? WanadiBrand.mintTech : Colors.white54,
               size: 28,
             ),
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(color: WanadiBrand.pureWhite, fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(color: WanadiBrand.pureWhite, fontWeight: FontWeight.bold, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
               style: TextStyle(
-                color: isActive ? WanadiBrand.mintTech : Colors.grey,
-                fontSize: 11,
+                color: isActive ? WanadiBrand.mintTech : Colors.white38,
+                fontSize: 12,
               ),
             ),
           ],
