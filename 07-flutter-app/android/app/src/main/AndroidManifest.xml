@@ -34,7 +34,7 @@
         </activity>
         
         <service
-            android:name=".BLEForegroundService"
+            android:name="com.wanadi.chasqui.BLEForegroundService"
             android:foregroundServiceType="connectedDevice"
             android:exported="false" />
 

@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.wanadi_chasqui"
-        minSdk = flutter.minSdkVersion
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
     versionCode = 1
     versionName = "1.0"
