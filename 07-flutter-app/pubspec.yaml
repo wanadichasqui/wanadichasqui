@@ -21,6 +21,7 @@ dependencies:
   flutter_ble_peripheral: ^2.1.1
   # Bridge to Rust (generated code will be placed in lib/bridge_generated.dart)
   flutter_rust_bridge: ^2.12.0
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

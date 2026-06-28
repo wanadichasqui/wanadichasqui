@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:io' show BytesBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,22 @@ export '../models/mls_group.dart';
 
 class ChasquiService extends ChangeNotifier {
   static const _foregroundChannel = MethodChannel('com.wanadi.chasqui/foreground');
+
+
+  Future<bool> requestBlePermissions() async {
+    if (await Permission.bluetoothScan.isGranted &&
+        await Permission.bluetoothAdvertise.isGranted &&
+        await Permission.bluetoothConnect.isGranted) {
+      return true;
+    }
+    final results = await [
+      Permission.bluetoothScan,
+      Permission.bluetoothAdvertise,
+      Permission.bluetoothConnect,
+      Permission.locationWhenInUse,
+    ].request();
+    return results.values.every((s) => s.isGranted);
+  }
 
   Future<void> _startForegroundService() async {
     try {
@@ -960,6 +977,11 @@ class ChasquiService extends ChangeNotifier {
 
   Future<void> startBleScanning() async {
     if (isBleScanning) return;
+    final granted = await requestBlePermissions();
+    if (!granted) {
+      logSystemEvent("Permisos BLE denegados. Activa Bluetooth y permisos.", type: "error");
+      return;
+    }
     isBleScanning = true;
     detectedBlePeers.clear();
     await _startForegroundService();
@@ -980,6 +1002,11 @@ class ChasquiService extends ChangeNotifier {
 
   Future<void> startBleAdvertising() async {
     if (isBleAdvertising) return;
+    final granted = await requestBlePermissions();
+    if (!granted) {
+      logSystemEvent("Permisos BLE denegados. Activa Bluetooth y permisos.", type: "error");
+      return;
+    }
     isBleAdvertising = true;
     await _startForegroundService();
     logSystemEvent("Beaconing BLE activo. Transmitiendo identidad soberana...", type: "success");
