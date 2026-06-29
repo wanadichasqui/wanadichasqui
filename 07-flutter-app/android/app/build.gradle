@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     // namespace = paquete interno (R/BuildConfig); debe coincidir con la
     // ubicación de MainActivity.kt. NO confundir con applicationId.
-    namespace = "com.example.wanadi_chasqui"
+    namespace = "com.wanadi.chasqui"
     compileSdk = 36
     ndkVersion = "26.1.10909125"
 
@@ -32,8 +32,8 @@ android {
         applicationId = "org.wanaditactical.chasqui"
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = 1
+        versionName = "1.0"
     }
 
     signingConfigs {
