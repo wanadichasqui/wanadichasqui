@@ -1,0 +1,8 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # Bridge web autogenerado por flutter_rust_bridge. El target es Android
+    # (pubspec: android: true, ios/web: false); este archivo no se compila y
+    # requiere features experimentales de Dart web. Se excluye del analizador.
+    - lib/bridge_generated.dart/frb_generated.web.dart

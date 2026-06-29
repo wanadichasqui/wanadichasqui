@@ -23,6 +23,10 @@ dependencies:
   flutter_rust_bridge: ^2.12.0
   permission_handler: ^11.3.1
   rxdart: ^0.28.0
+  # Ubicación GPS para adjuntar al SOS (funciona offline, sin red).
+  geolocator: ^11.0.0
+  # Almacenamiento cifrado por Android Keystore para secretos (clave privada, mnemonic).
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:

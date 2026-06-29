@@ -503,4 +503,117 @@ pub fn client_mls_decrypt_message(session_id: String, msg: MlsEncryptedMessageFf
     String::from_utf8(plaintext_bytes).map_err(|e| e.to_string())
 }
 
+// ─────────────────────────────────────────────────────────────────
+//  BLE Emergency Beacon (mesh sin conexión) — puente a wire_protocol
+// ─────────────────────────────────────────────────────────────────
+
+use wire_protocol::ble_beacon::{self, SosBeacon, BeaconReassembler};
+
+/// Reensamblador global de frames BLE recibidos. La capa Dart alimenta cada
+/// frame escaneado y recibe el payload completo cuando un SOS está listo.
+static BEACON_REASSEMBLER: OnceLock<Mutex<BeaconReassembler>> = OnceLock::new();
+
+fn get_beacon_reassembler() -> &'static Mutex<BeaconReassembler> {
+    BEACON_REASSEMBLER.get_or_init(|| Mutex::new(BeaconReassembler::new()))
+}
+
+/// Forma FFI de un beacon de emergencia (sender_id como Vec<u8> de 4 bytes).
+#[frb]
+#[derive(Debug, Clone)]
+pub struct SosBeaconFfi {
+    pub msg_id: u32,
+    pub ttl: u8,
+    pub priority: u8,
+    pub sender_id: Vec<u8>,
+    pub lat_micro: i32,
+    pub lon_micro: i32,
+    pub note: String,
+}
+
+impl From<SosBeacon> for SosBeaconFfi {
+    fn from(b: SosBeacon) -> Self {
+        SosBeaconFfi {
+            msg_id: b.msg_id,
+            ttl: b.ttl,
+            priority: b.priority,
+            sender_id: b.sender_id.to_vec(),
+            lat_micro: b.lat_micro,
+            lon_micro: b.lon_micro,
+            note: b.note,
+        }
+    }
+}
+
+impl From<SosBeaconFfi> for SosBeacon {
+    fn from(f: SosBeaconFfi) -> Self {
+        let mut sender_id = [0u8; 4];
+        for (i, b) in f.sender_id.iter().take(4).enumerate() {
+            sender_id[i] = *b;
+        }
+        SosBeacon {
+            msg_id: f.msg_id,
+            ttl: f.ttl,
+            priority: f.priority,
+            sender_id,
+            lat_micro: f.lat_micro,
+            lon_micro: f.lon_micro,
+            note: f.note,
+        }
+    }
+}
+
+/// Codifica un beacon a su forma binaria compacta.
+#[frb]
+pub fn sos_encode(beacon: SosBeaconFfi) -> Vec<u8> {
+    ble_beacon::encode_sos(&beacon.into())
+}
+
+/// Decodifica un beacon. Devuelve None si el payload está malformado.
+#[frb]
+pub fn sos_decode(raw: Vec<u8>) -> Option<SosBeaconFfi> {
+    ble_beacon::decode_sos(&raw).map(Into::into)
+}
+
+/// Trocea un payload en frames del tamaño de un advertising BLE (`mtu` bytes).
+#[frb]
+pub fn beacon_fragment(msg_id: u32, payload: Vec<u8>, mtu: u32) -> Vec<Vec<u8>> {
+    ble_beacon::fragment_beacon(msg_id, &payload, mtu as usize)
+}
+
+/// Atajo: codifica un beacon y lo trocea listo para anunciar por BLE.
+#[frb]
+pub fn sos_make_frames(beacon: SosBeaconFfi, mtu: u32) -> Vec<Vec<u8>> {
+    let msg_id = beacon.msg_id;
+    let payload = ble_beacon::encode_sos(&beacon.into());
+    ble_beacon::fragment_beacon(msg_id, &payload, mtu as usize)
+}
+
+/// Alimenta un frame BLE recibido. Devuelve el payload completo exactamente una
+/// vez, cuando llega el último fragmento de un mensaje aún no entregado.
+#[frb]
+pub fn beacon_push_frame(frame: Vec<u8>, tick: u64) -> Option<Vec<u8>> {
+    let mut r = get_beacon_reassembler().lock().unwrap();
+    r.push_frame(&frame, tick)
+}
+
+/// Poda los mensajes parciales más viejos que `max_age` ticks.
+#[frb]
+pub fn beacon_prune(now_tick: u64, max_age: u64) {
+    let mut r = get_beacon_reassembler().lock().unwrap();
+    r.prune(now_tick, max_age);
+}
+
+/// True si ese msg_id ya fue reensamblado y emitido (evita reprocesar/relays).
+#[frb]
+pub fn beacon_already_delivered(msg_id: u32) -> bool {
+    let r = get_beacon_reassembler().lock().unwrap();
+    r.already_delivered(msg_id)
+}
+
+/// Devuelve la forma de relay (TTL decrementado) o None si el beacon expiró.
+#[frb]
+pub fn beacon_relay(beacon: SosBeaconFfi) -> Option<SosBeaconFfi> {
+    ble_beacon::relay_beacon(beacon.into()).map(Into::into)
+}
+
 

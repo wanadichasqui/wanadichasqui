@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import 'sos_screen.dart';
 import 'identity_screen.dart';
 import 'contacts_screen.dart';
 import 'settings_screen.dart';
@@ -15,6 +16,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
+    const SosScreen(),
     const IdentityScreen(),
     const ContactsScreen(),
     const SettingsScreen(),
@@ -41,6 +43,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         },
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sos_outlined),
+            activeIcon: Icon(Icons.sos_rounded),
+            label: "SOS",
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.security_outlined),
             activeIcon: Icon(Icons.security),

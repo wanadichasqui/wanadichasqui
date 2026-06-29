@@ -5,9 +5,16 @@ import 'dart:typed_data';
 import 'dart:io' show BytesBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'tactical_peer_controller.dart';
+import 'ble_service.dart';
+import 'ble_mesh_transport.dart';
+import 'ble_beacon_codec.dart';
+import 'location_service.dart';
+import '../bridge_generated.dart/api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import '../models/contact.dart';
@@ -17,6 +24,11 @@ import '../models/mls_group.dart';
 export '../models/mls_group.dart';
 
 class ChasquiService extends ChangeNotifier {
+
+  // ===== BLE CORE =====
+  final BleService bleService = BleService();
+  StreamSubscription<List<DiscoveredDevice>>? _bleDevicesSubscription;
+
   static const _foregroundChannel = MethodChannel('com.wanadi.chasqui/foreground');
   final tacticalPeerController = TacticalPeerController();
 
@@ -103,6 +115,107 @@ class ChasquiService extends ChangeNotifier {
     // _presenceSimulationTimer = Timer.periodic(const Duration(seconds: 8), (_) => _simulatePresenceUpdates()); // DESACTIVADO
     // Tráfico de cobertura local
     _startDummyScheduler();
+    // Mesh BLE de emergencia (SOS sin internet).
+    _initMesh();
+  }
+
+  // Almacenamiento cifrado por Android Keystore para secretos.
+  final FlutterSecureStorage _secure = const FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
+  // ===== MESH BLE DE EMERGENCIA (SOS) =====
+  final BleMeshTransport meshTransport = BleMeshTransport();
+  StreamSubscription<SosBeacon>? _meshSub;
+
+  /// SOS recibidos por la mesh (deduplicados), más reciente primero.
+  final List<SosBeacon> receivedSos = [];
+
+  /// True mientras el radio mesh está activo.
+  bool meshActive = false;
+
+  Future<void> _initMesh() async {
+    _meshSub = meshTransport.onSos.listen((sos) {
+      receivedSos.insert(0, sos);
+      logSystemEvent(
+        "SOS recibido por mesh BLE (prioridad ${sos.priority}).",
+        type: sos.priority >= kPriorityCritical ? "error" : "warning",
+      );
+      notifyListeners();
+    });
+
+    final granted = await requestBlePermissions();
+    if (!granted) {
+      logSystemEvent("Sin permisos BLE: la mesh de emergencia está inactiva.", type: "warning");
+      return;
+    }
+    try {
+      await meshTransport.start();
+      meshActive = true;
+      logSystemEvent("Mesh BLE de emergencia activa. Escuchando SOS cercanos.", type: "success");
+    } catch (e) {
+      logSystemEvent("No se pudo iniciar la mesh BLE: $e", type: "error");
+    }
+    notifyListeners();
+  }
+
+  /// Deriva un id de emisor corto (4 bytes) desde la clave pública local.
+  Uint8List _localSenderId() {
+    final hex = localPublicKeyHex ?? "";
+    final out = Uint8List(4);
+    for (var i = 0; i < 4; i++) {
+      final h = i * 2;
+      if (h + 2 <= hex.length) {
+        out[i] = int.tryParse(hex.substring(h, h + 2), radix: 16) ?? 0;
+      }
+    }
+    return out;
+  }
+
+  /// Emite un beacon de emergencia por la mesh BLE (offline-first).
+  ///
+  /// [priority]: kPrioritySafe / kPriorityHelp / kPriorityCritical.
+  /// [lat]/[lon] en grados decimales; null = sin ubicación.
+  Future<SosBeacon> sendSos({
+    required int priority,
+    String note = "",
+    double? lat,
+    double? lon,
+    bool attachLocation = true,
+  }) async {
+    // Captura GPS (offline-capable) si no se pasaron coordenadas.
+    if (attachLocation && (lat == null || lon == null)) {
+      final pos = await LocationService.getQuickPosition();
+      if (pos != null) {
+        lat = pos.lat;
+        lon = pos.lon;
+      }
+    }
+
+    final msgId = Random().nextInt(0xFFFFFFFF);
+    final beacon = SosBeacon(
+      msgId: msgId,
+      ttl: BleMeshTransport.defaultTtl,
+      priority: priority,
+      senderId: _localSenderId(),
+      latMicro: lat != null ? (lat * 1e6).round() : -2147483648,
+      lonMicro: lon != null ? (lon * 1e6).round() : -2147483648,
+      note: note,
+    );
+
+    meshTransport.broadcastSos(beacon);
+    // El emisor también lo ve en su propia lista.
+    receivedSos.insert(0, beacon);
+    logSystemEvent(
+      priority >= kPriorityCritical
+          ? "SOS CRÍTICO emitido por mesh BLE."
+          : (priority == kPrioritySafe
+              ? "Estado 'estoy a salvo' emitido por mesh."
+              : "Aviso de ayuda emitido por mesh."),
+      type: priority >= kPriorityCritical ? "error" : "success",
+    );
+    notifyListeners();
+    return beacon;
   }
 
   void _startDummyScheduler() {
@@ -118,10 +231,29 @@ class ChasquiService extends ChangeNotifier {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    localPrivateKeyHex = prefs.getString('private_key');
     localPublicKeyHex = prefs.getString('public_key');
-    localMnemonic = prefs.getString('mnemonic');
     displayName = prefs.getString('display_name') ?? "Chasqui Node";
+
+    // Secretos desde el almacenamiento cifrado, con migración del texto plano
+    // antiguo (instalaciones previas guardaban la clave en shared_preferences).
+    localPrivateKeyHex = await _secure.read(key: 'private_key');
+    localMnemonic = await _secure.read(key: 'mnemonic');
+    final legacyPriv = prefs.getString('private_key');
+    final legacyMnem = prefs.getString('mnemonic');
+    if (legacyPriv != null || legacyMnem != null) {
+      localPrivateKeyHex ??= legacyPriv;
+      localMnemonic ??= legacyMnem;
+      if (localPrivateKeyHex != null) {
+        await _secure.write(key: 'private_key', value: localPrivateKeyHex!);
+      }
+      if (localMnemonic != null) {
+        await _secure.write(key: 'mnemonic', value: localMnemonic!);
+      }
+      // Borrar el texto plano heredado.
+      await prefs.remove('private_key');
+      await prefs.remove('mnemonic');
+      logSystemEvent("Secretos migrados a almacenamiento cifrado (Keystore).", type: "success");
+    }
 
     // Cargar Ajustes
     nodeUrl = prefs.getString('node_url') ?? "http://localhost:8000";
@@ -151,13 +283,10 @@ class ChasquiService extends ChangeNotifier {
     final words = List<String>.generate(12, (_) => _wordList[rand.nextInt(_wordList.length)]);
     localMnemonic = words.join(" ");
 
-    // Derivar claves a partir de la frase mnemónica (simulación reproducible)
-    final bytes = utf8.encode(localMnemonic!);
-    final pkBytes = List<int>.generate(32, (i) => (bytes[i % bytes.length] ^ (i * 17)) & 0xFF);
-    final pubBytes = List<int>.generate(32, (i) => (pkBytes[i] ^ 0xAA) & 0xFF);
-
-    localPrivateKeyHex = pkBytes.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
-    localPublicKeyHex = pubBytes.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
+    // Identidad Ed25519 REAL derivada en Rust (crypto_core) desde el mnemonic.
+    final id = await identityFromMnemonic(mnemonic: localMnemonic!);
+    localPrivateKeyHex = id.privateKeyHex;
+    localPublicKeyHex = id.publicKeyHex;
 
     // CRÍTICO: await para garantizar que la clave queda en disco antes de continuar.
     await _saveIdentity();
@@ -174,31 +303,29 @@ class ChasquiService extends ChangeNotifier {
     }
 
     localMnemonic = cleanMnemonic;
-    final bytes = utf8.encode(localMnemonic!);
-    final pkBytes = List<int>.generate(32, (i) => (bytes[i % bytes.length] ^ (i * 17)) & 0xFF);
-    final pubBytes = List<int>.generate(32, (i) => (pkBytes[i] ^ 0xAA) & 0xFF);
+    // Identidad Ed25519 REAL derivada en Rust (crypto_core). No más XOR.
+    final id = await identityFromMnemonic(mnemonic: cleanMnemonic);
+    localPrivateKeyHex = id.privateKeyHex;
+    localPublicKeyHex = id.publicKeyHex;
 
-    localPrivateKeyHex = pkBytes.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
-    localPublicKeyHex = pubBytes.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
-
-    _saveIdentity();
-    logSystemEvent("Identidad importada exitosamente desde frase de recuperación.", type: "success");
+    await _saveIdentity();
+    logSystemEvent("Identidad importada (Ed25519) desde frase de recuperación.", type: "success");
   }
 
   Future<void> _saveIdentity() async {
     final prefs = await SharedPreferences.getInstance();
+    // Secretos → almacenamiento cifrado por Keystore (NUNCA en shared_preferences).
     if (localPrivateKeyHex != null) {
-      await prefs.setString('private_key', localPrivateKeyHex!);
+      await _secure.write(key: 'private_key', value: localPrivateKeyHex!);
     }
+    if (localMnemonic != null) {
+      await _secure.write(key: 'mnemonic', value: localMnemonic!);
+    }
+    // La clave pública y el nombre no son secretos.
     if (localPublicKeyHex != null) {
       await prefs.setString('public_key', localPublicKeyHex!);
     }
-    if (localMnemonic != null) {
-      await prefs.setString('mnemonic', localMnemonic!);
-    }
     await prefs.setString('display_name', displayName);
-    // Nota: en shared_preferences moderno cada await setX() ya persiste a disco.
-    // El await garantiza el flush antes de que la app pueda ser terminada.
     notifyListeners();
   }
 
@@ -1120,6 +1247,8 @@ class ChasquiService extends ChangeNotifier {
     _presenceSimulationTimer?.cancel();
     _dummySchedulerTimer?.cancel();
     _bleSimulationTimer?.cancel();
+    _meshSub?.cancel();
+    meshTransport.dispose();
     super.dispose();
   }
 }

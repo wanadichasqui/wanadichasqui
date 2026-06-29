@@ -27,33 +27,34 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    _btStateSubscription = _ble.statusStream.listen((status) {
-      final isEnabled = status == BleStatus.ready;
-      if (_isBluetoothEnabled != isEnabled) {
-        setState(() => _isBluetoothEnabled = isEnabled);
-        if (!isEnabled) {
-          HapticFeedback.vibrate();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: const Color(0xFFB71C1C),
-              duration: const Duration(seconds: 4),
-              content: Row(
-                children: const [
-                  Icon(Icons.bluetooth_disabled, color: Colors.white),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      "ADVERTENCIA: Bluetooth desactivado.",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+_btStateSubscription = _ble.statusStream.listen((status) {
+  final isEnabled = status == BleStatus.ready;
+  if (_isBluetoothEnabled != isEnabled) {
+    setState(() => _isBluetoothEnabled = isEnabled);
+    if (!isEnabled) {
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFB71C1C),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: const Row(
+            children: [
+              Icon(Icons.bluetooth_disabled, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Hardware Bluetooth desactivado. Radio táctico fuera de línea.",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
-            ),
-          );
-        }
-      }
-    });
+            ],
+          ),
+        ),
+      );
+    }
+  }
+});
   }
 
   @override
@@ -231,10 +232,22 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                   Expanded(
                     child: _buildActionButton(
                       title: "Transmitir (Beacon)",
-                      subtitle: service.isBleAdvertising ? "Anunciando..." : "Inactivo",
+                      subtitle: !_isBluetoothEnabled ? "Hardware Apagado" : service.isBleAdvertising ? "Anunciando..." : "Inactivo",
                       icon: Icons.wifi_tethering,
                       isActive: service.isBleAdvertising,
                       onTap: () {
+                        if (!_isBluetoothEnabled) {
+                          HapticFeedback.heavyImpact();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFFB71C1C),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              content: const Text("Activa el Bluetooth para usar el radio táctico."),
+                            ),
+                          );
+                          return;
+                        }
                         HapticFeedback.mediumImpact();
                         if (service.isBleAdvertising) {
                           service.stopBleAdvertising();
@@ -248,10 +261,22 @@ class _OfflineSyncScreenState extends State<OfflineSyncScreen> with SingleTicker
                   Expanded(
                     child: _buildActionButton(
                       title: "Escanear Pares",
-                      subtitle: service.isBleScanning ? "Buscando..." : "Inactivo",
+                      subtitle: !_isBluetoothEnabled ? "Hardware Apagado" : service.isBleScanning ? "Buscando..." : "Inactivo",
                       icon: Icons.bluetooth_searching,
                       isActive: service.isBleScanning,
                       onTap: () {
+                        if (!_isBluetoothEnabled) {
+                          HapticFeedback.heavyImpact();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFFB71C1C),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              content: const Text("Activa el Bluetooth para usar el radio táctico."),
+                            ),
+                          );
+                          return;
+                        }
                         HapticFeedback.mediumImpact();
                         if (service.isBleScanning) {
                           service.stopBleScanning();

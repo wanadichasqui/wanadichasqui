@@ -4,7 +4,17 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Carga la configuración de firma de release desde android/key.properties
+// (no versionado). En CI, el workflow genera este archivo desde secrets.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
+    // namespace = paquete interno (R/BuildConfig); debe coincidir con la
+    // ubicación de MainActivity.kt. NO confundir con applicationId.
     namespace = "com.example.wanadi_chasqui"
     compileSdk = 36
     ndkVersion = "26.1.10909125"
@@ -19,16 +29,31 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.wanadi_chasqui"
+        applicationId = "org.wanaditactical.chasqui"
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
-    versionCode = 1
-    versionName = "1.0"
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProperties.containsKey("storeFile")) {
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+                storeFile = file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+            }
+        }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            // Usa la firma de release si hay key.properties; si no, cae a debug
+            // (solo para builds locales de prueba, NUNCA para distribución).
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled = false
+            shrinkResources = false
         }
     }
 }

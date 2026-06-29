@@ -3,9 +3,17 @@ import 'package:provider/provider.dart';
 import 'services/chasqui_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'package:flutter/services.dart';
+import 'bridge_generated.dart/frb_generated.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Inicializa el núcleo Rust (crypto_core) antes de crear el servicio, que
+  // deriva la identidad Ed25519 real a través del puente.
+  try {
+    await RustLib.init();
+  } catch (e) {
+    debugPrint('Error al inicializar RustLib: $e');
+  }
   // Inicia el Foreground Service en segundo plano sin bloquear el arranque de la UI
   _ensureForegroundService();
   runApp(

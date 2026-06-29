@@ -1,0 +1,6 @@
+rust_input: ../03-crypto-core/src/api.rs
+dart_output: lib/bridge
+rust_root: ../03-crypto-core
+
+c_output: null
+web_enabled: false

@@ -4,6 +4,8 @@ mod ble_fragmenter;
 
 // Cripto-core - wrappers seguros.
 
+pub mod api;
+
 pub mod identity;
 pub use identity::*;
 

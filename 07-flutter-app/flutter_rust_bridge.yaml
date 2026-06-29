@@ -1,0 +1,7 @@
+# Config canónica de flutter_rust_bridge para Wanadi Chasqui.
+# Escanea SOLO el módulo api de crypto_core (superficie FFI limpia), no todo el
+# crate (otros módulos exponen tipos no-FFI que romperían el codegen).
+rust_input: crate::api
+rust_root: ../03-crypto-core
+dart_output: lib/bridge_generated.dart
+web: false
